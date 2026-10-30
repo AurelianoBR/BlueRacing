@@ -156,8 +156,9 @@ A command is **8 bytes**, written without response to characteristic `fff1` of s
 | **Field** | mode `1`/`2` | forward | reverse | left | right | lights | turbo | donut |
 
 - Every field is `0` or `1`. There is no half throttle.
-- Battery uses the standard Battery Service, `180f` / `2a19`: 1 byte with the percentage, readable and notifiable.
-- The car doesn't report speed, position or steering angle.
+- Battery uses the standard Battery Service, `180f` / `2a19`: 1 byte with the percentage, notified about every 10 s in 10% steps. Use the notifications: reading the characteristic directly returned a constant `56`.
+- The level tracks battery voltage, so it dips under load, and it isn't a reliable way to tell whether the car is charging.
+- The car doesn't report speed, position, steering angle or charging state.
 
 ### HTTP API
 

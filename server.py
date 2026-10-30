@@ -40,6 +40,13 @@ class Car:
         self.busy = False
         self.wake = asyncio.Event()
 
+    def on_battery(self, level):
+        # no charging detection: the car has no charging flag, and on the SF-25 the level stayed flat
+        # for 20+ min on the charger (10% steps, sags under load), so it can't be inferred either
+        if level != self.status["battery"]:
+            print(f"{time.strftime('%H:%M:%S')} {self.id}: battery {level}%")
+        self.status["battery"] = level
+
     def info(self):
         return {"id": self.id, "name": self.dev.name, **self.status}
 
@@ -97,8 +104,10 @@ async def drive(car):
     try:
         async with BleakClient(car.dev) as c:
             print(f"{car.id}: connected ({car.dev.name})")
-            car.status.update(connected=True, battery=(await c.read_gatt_char(BATTERY))[0])
-            await c.start_notify(BATTERY, lambda _, d: car.status.update(battery=d[0]))
+            # no read: on the SF-25 a read of 2a19 returned 56 twice while notifications said 10 and 80,
+            # so trust notifications only (first one within ~10 s). Battery is kept across reconnects.
+            car.status["connected"] = True
+            await c.start_notify(BATTERY, lambda _, d: car.on_battery(d[0]))
             rssi_task = asyncio.create_task(rssi_poll(car, c))
             while c.is_connected:
                 await c.write_gatt_char(CMD, car.packet(), response=False)
