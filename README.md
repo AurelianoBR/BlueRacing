@@ -2,44 +2,62 @@
 
 # 🏎️ BlueRacing
 
-**Drive Bburago Shell Racing Legends cars from your Mac over Bluetooth: keyboard, PS4 controller, and two-car drag races.**
+### Race your Bburago Shell Racing Legends cars from your Mac.
+**Keyboard, PS4 controller, two cars at once, and a built-in drag race. No phone needed.**
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![bleak](https://img.shields.io/badge/BLE-bleak-0082FC?logo=bluetooth&logoColor=white)
-![macOS](https://img.shields.io/badge/macOS-only-000000?logo=apple&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)
 ![No build step](https://img.shields.io/badge/frontend-plain%20HTML-E10600)
 ![MIT](https://img.shields.io/badge/license-MIT-3DDC84)
 
 <img src="docs/screenshot.png" alt="BlueRacing Pit Wall dashboard: battery, signal, throttle, steering, drag race and controls" width="900">
 
+[**Get started**](#-get-started) · [How to play](#%EF%B8%8F-how-to-play) · [Drag race](#-drag-race) · [Troubleshooting](#-troubleshooting) · [Under the hood](#-under-the-hood)
+
 </div>
 
 ---
 
-## ✨ Features
+## ✨ Why it's fun
 
-| | |
-|---|---|
-| 🔵 **Multiple cars at once** | Finds and connects every `SL-*` car nearby, and reconnects if one drops. |
-| ⌨️ **Keyboard** | WASD or arrow keys, turbo, donut, lights and mode, with instant response. |
-| 🎮 **PS4 controller** | Drives one car while the keyboard drives the other, so two people can play. |
-| 🏁 **Drag race** | 3-2-1 countdown, both cars launch together on turbo, and you pick the winner. Nicknames and scores are saved. |
-| 🔋 **Telemetry** | Battery (%), BLE signal (RSSI) and estimated distance for each car. |
-| 🛑 **Watchdog** | If the page stops talking to the server for 0.3 s, the car stops. |
+- 🏁 **Drag race mode.** Line up two cars and run a 3‑2‑1 countdown. Both launch on the exact same command, and a scoreboard keeps the bragging rights.
+- 🎮 **PS4 controller.** One person drives with the controller, another with the keyboard: two players, two cars.
+- 🔵 **Plug and play.** Turn the cars on and they connect by themselves, and reconnect if one drops.
+- 📊 **F1-style pit wall.** Live battery, Bluetooth signal and estimated distance for every car.
+- 🛑 **Safe by default.** If the page loses contact for 0.3 s, the car stops.
 
-## 🚀 Getting started
+## 🚀 Get started
+
+You need a **Mac with Bluetooth**, **Google Chrome**, and at least one **Bburago Shell Racing Legends** car. A PS4 controller is optional.
+
+**1. Install [uv](https://docs.astral.sh/uv/).** It's a tiny tool that takes care of Python for you. Open **Terminal** and paste:
 
 ```bash
-uv venv --python 3.12 .venv
-uv pip install --python .venv bleak
-.venv/bin/python server.py
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Open **http://localhost:8000** in Chrome and turn the cars on. The server connects to them by itself.
+**2. Download BlueRacing.** Click **Code → Download ZIP** at the top of this page and unzip it, or run:
 
-> Why a server instead of Web Bluetooth? Web Bluetooth can't read RSSI once the car is connected. `server.py` (bleak) bridges BLE and serves the page.
+```bash
+git clone https://github.com/AurelianoBR/BlueRacing.git
+```
 
-## 🕹️ Controls
+**3. Start it** from inside the folder:
+
+```bash
+cd BlueRacing
+uv run server.py
+```
+
+**4. Open http://localhost:8000 in Chrome, turn your cars on, and drive.** 🏎️
+
+> [!NOTE]
+> The first time you run it, macOS asks whether **Terminal** may use Bluetooth. Click **Allow**.
+
+To stop, press `Ctrl + C` in the Terminal.
+
+## 🕹️ How to play
 
 | Action | Keyboard | 🎮 PS4 |
 |---|---|---|
@@ -53,18 +71,68 @@ Open **http://localhost:8000** in Chrome and turn the cars on. The server connec
 | Pick car | `0` all · `1`…`9` | 🎮 button at the top |
 | Race start | `R` | OPTIONS |
 
-The controller takes the last car found by default, and the 🎮 button switches cars. The keyboard never drives the controller's car, so the two inputs don't fight.
+With more than one car on, the **ALL** button at the top (or keys `0`–`9`) picks which car the keyboard drives.
 
-**Pairing the controller:** hold **SHARE + PS** until the light bar flashes, then pair it in System Settings → Bluetooth. A USB cable works too, but only if it carries data and not just power. Press any button with the page focused so Chrome exposes the controller.
+### 🎮 PS4 controller
+
+1. Hold **SHARE + PS** until the light bar flashes quickly.
+2. Pair it in **System Settings → Bluetooth** (it shows up as *Wireless Controller*).
+3. Press any button with the BlueRacing tab focused. A **🎮** button appears at the top.
+
+The controller drives the last car found, and clicking 🎮 switches cars. The keyboard never drives the controller's car, so two people can play without fighting.
 
 ## 🏁 Drag race
 
-1. Line up the cars and give each one a nickname in the **DRAG RACE** panel.
-2. Hit **START** (or `R` / OPTIONS). The cars wait still during 3‑2‑1.
-3. On **GO!**, a single command wakes every car at the same time: full turbo for *N* seconds (default 3).
-4. The car doesn't report its position, so you judge the winner by eye and click **WINNER** on the car that got ahead.
+1. Line up the cars on the start line.
+2. Give each car a nickname in the **DRAG RACE** panel.
+3. Hit **START** (or `R` / OPTIONS). The cars wait still during 3‑2‑1, and on **GO!** they all launch at full turbo for *N* seconds (3 by default).
+4. Click **WINNER** on the car that got ahead.
 
-## 📡 BLE protocol
+The cars can't report their position, so you judge the finish by eye. Nicknames and scores are saved in your browser.
+
+## 🚗 Supported cars
+
+| Car | Bluetooth name | Status |
+|---|---|---|
+| Ferrari SF-25 (F1) | `SL-SF-25` | ✅ Tested, two at once |
+| Other Shell Racing Legends cars | `SL-*` | 🤞 Should work, untested |
+
+Got another model? [Open an issue](https://github.com/AurelianoBR/BlueRacing/issues) and tell us if it works.
+
+## 🧰 Troubleshooting
+
+<details>
+<summary><b>The page says "looking for car…" forever</b></summary>
+
+- Close the Shell Racing Legends app on your phone. A car accepts only one connection at a time.
+- Turn the car off and on again.
+- Check that Terminal is allowed in **System Settings → Privacy & Security → Bluetooth**.
+</details>
+
+<details>
+<summary><b>The 🎮 button doesn't appear</b></summary>
+
+- Press a button on the controller while the BlueRacing tab is focused. Chrome hides controllers until then.
+- Over USB, many cables only charge. Use a data cable or pair over Bluetooth instead.
+</details>
+
+<details>
+<summary><b>The car stops when I switch tabs or windows</b></summary>
+
+That's on purpose. Only the focused tab drives, and the car stops 0.3 s after the page goes quiet.
+</details>
+
+<details>
+<summary><b><code>Address already in use</code></b></summary>
+
+BlueRacing is already running in another Terminal window. Close that one first.
+</details>
+
+---
+
+## 🔧 Under the hood
+
+### Architecture
 
 ```mermaid
 flowchart LR
@@ -75,17 +143,39 @@ flowchart LR
   C1 -- "notify 180f / 2a19<br/>battery %" --> S
 ```
 
-A command is **8 bytes** written to characteristic `fff1` (service `fff0`):
+`server.py` scans continuously and connects to every device whose name starts with `SL-`. It writes the current command to each car every 50 ms, or immediately when the command changes, and stops a car whose page has been silent for 0.3 s.
+
+Why not Web Bluetooth? It can't read RSSI once a car is connected, so a small local server bridges BLE and serves the page.
+
+### BLE protocol
+
+A command is **8 bytes**, written without response to characteristic `fff1` of service `fff0`:
 
 | Byte | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|---|
 | **Field** | mode `1`/`2` | forward | reverse | left | right | lights | turbo | donut |
 
 - Every field is `0` or `1`. There is no half throttle.
-- Battery uses the standard `180f` / `2a19` service: 1 byte, as a percentage.
+- Battery uses the standard Battery Service, `180f` / `2a19`: 1 byte with the percentage, readable and notifiable.
 - The car doesn't report speed, position or steering angle.
 
-## 🗂️ Files
+### HTTP API
+
+`POST /` with a JSON body:
+
+```json
+{ "car": "all", "fwd": 1, "back": 0, "left": 0, "right": 0, "turbo": 1, "donut": 0, "light": 0, "mode": 0 }
+```
+
+`car` takes `"all"`, a car id, or a list of ids. The response lists every car:
+
+```json
+{ "cars": [{ "id": "F36F", "name": "SL-SF-25", "connected": true, "rssi": -45, "battery": 80 }] }
+```
+
+A car id is the last 4 characters of its macOS Bluetooth identifier.
+
+### Files
 
 | File | Purpose |
 |---|---|
@@ -96,6 +186,12 @@ A command is **8 bytes** written to characteristic `fff1` (service `fff0`):
 | `probe.py` | Listens to every notification while sending an idle command |
 | `drive.py` | Quick test: left, right, lights, forward, reverse for 1 s each |
 
+The helper scripts need bleak too: `uv run --with bleak scan.py`.
+
+## 🤝 Contributing
+
+Issues and PRs are welcome, especially reports from other car models, Windows/Linux testing, and race modes.
+
 ## 🙏 Credits
 
 Protocol documented by [tmk907/RacingCarsController](https://github.com/tmk907/RacingCarsController) and [jenkings/BLE-RC-Car-ESP32](https://github.com/jenkings/BLE-RC-Car-ESP32).
@@ -104,4 +200,4 @@ Protocol documented by [tmk907/RacingCarsController](https://github.com/tmk907/R
 
 [MIT](LICENSE) © Murilo Aureliano
 
-<div align="center"><sub>Personal project, not affiliated with Bburago, Shell or Ferrari.</sub></div>
+<div align="center"><sub>Personal project, not affiliated with Bburago, Shell or Ferrari. If BlueRacing made you smile, drop a ⭐</sub></div>

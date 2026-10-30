@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["bleak>=3.0.2,<4"]
+# ///
 """BLE bridge for Bburago Shell Racing Legends cars + serves index.html (Pit Wall UI) on http://localhost:8000.
 
 Connects to every car advertising a name starting with PREFIX, all at once.
