@@ -48,7 +48,8 @@ class Car:
         self.status["battery"] = level
 
     def info(self):
-        return {"id": self.id, "name": self.dev.name, **self.status}
+        # cmd = the 8 bytes being sent right now (watchdog applied), so the page can show what each car does
+        return {"id": self.id, "name": self.dev.name, **self.status, "cmd": list(self.packet())}
 
     def packet(self):
         # Packet layout:
