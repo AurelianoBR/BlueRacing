@@ -168,10 +168,10 @@ A command is **8 bytes**, written without response to characteristic `fff1` of s
 { "car": "all", "fwd": 1, "back": 0, "left": 0, "right": 0, "turbo": 1, "donut": 0, "light": 0, "mode": 0 }
 ```
 
-`car` takes `"all"`, a car id, or a list of ids. The response lists every car:
+`car` takes `"all"`, a car id, or a list of ids. The response lists every car, with `cmd` = the 8 bytes being sent to it right now:
 
 ```json
-{ "cars": [{ "id": "F36F", "name": "SL-SF-25", "connected": true, "rssi": -45, "battery": 80 }] }
+{ "cars": [{ "id": "F36F", "name": "SL-SF-25", "connected": true, "rssi": -45, "battery": 80, "cmd": [1, 1, 0, 0, 0, 0, 1, 0] }] }
 ```
 
 A car id is the last 4 characters of its macOS Bluetooth identifier.
