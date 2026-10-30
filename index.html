@@ -89,6 +89,22 @@ header{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:s
 #btnConnect{height:48px;padding:0 22px;border:0;border-radius:10px;background:var(--accent);color:#fff;box-shadow:0 4px 0 #060608}
 .connected #btnConnect{background:var(--off)}
 
+/* fleet (2+ cars) */
+.fleet{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.fcar{all:unset;box-sizing:border-box;cursor:pointer;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.fcar:focus-visible{outline:3px solid var(--boost);outline-offset:3px}
+.fcar.on{border-color:var(--accent);box-shadow:0 0 18px rgba(225,6,0,.35)}
+.fcar.off{opacity:.4}
+.fcar .nick{font-family:var(--display);font-weight:700;font-size:24px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcar .cells i{height:14px}
+.fcar .bars{height:22px;gap:3px}
+.fcar .bars i{width:6px}
+.ctl{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.12em;padding:4px 8px;border-radius:6px;background:var(--off);color:var(--muted)}
+.ctl.kb{background:var(--accent);color:#fff}
+.ctl.pad{background:var(--rev);color:#fff}
+.padpick{all:unset;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--btn-line);color:var(--muted)}
+.padpick:focus-visible{outline:2px solid var(--boost)}
+
 /* drag race */
 .race{background:var(--deck);border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-wrap:wrap;gap:20px 28px;align-items:center;justify-content:space-between}
 .rc{display:flex;gap:10px;align-items:center}
@@ -118,6 +134,8 @@ kbd{display:inline-flex;align-items:center;justify-content:center;min-width:26px
       <button class="hud-btn" id="btnConnect">CONNECT</button>
     </div>
   </header>
+
+  <section class="fleet" id="fleet" aria-label="Connected cars" style="display:none"></section>
 
   <section class="hud">
     <div class="col">
@@ -490,6 +508,46 @@ const TX_AT_1M = -55, N = 2.5;
   }
   $('btnRace').onclick = startRace;
 
+  // ---- fleet strip: with 2+ cars, one card per car with battery, signal and who drives it ----
+  const fleet = $('fleet');
+  let fleetHtml = '';
+  const esc = (t) => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+  function renderFleet() {
+    fleet.style.display = cars.length > 1 ? '' : 'none';
+    if (cars.length < 2) return;
+    const kb = target(), hasPad = padBtn.style.display !== 'none';
+    const html = cars.map((c, i) => {
+      const b = c.battery, lit = b == null ? 0 : Math.round(b / 20);
+      const bc = b == null ? '' : b <= 20 ? 'var(--warn)' : b <= 40 ? 'var(--boost)' : 'var(--ok)';
+      const r = c.connected ? c.rssi : null, bars = r == null ? 0 : r > -60 ? 4 : r > -70 ? 3 : r > -80 ? 2 : 1;
+      const who = !c.connected ? '<span class="ctl">OFFLINE</span>'
+        : c.id === pad.car ? '<span class="ctl pad">🎮 PS4</span>'
+        : kb.includes(c.id) ? '<span class="ctl kb">⌨️ KEYBOARD</span>' : '<span class="ctl">IDLE</span>';
+      const pick = hasPad && c.connected && c.id !== pad.car ? `<span class="padpick" role="button" tabindex="0" data-pad="${c.id}" aria-label="Give the PS4 controller to this car">🎮 here</span>` : '';
+      return `<button class="fcar${sel === i + 1 ? ' on' : ''}${c.connected ? '' : ' off'}" data-n="${i + 1}" aria-label="Drive car ${i + 1} with the keyboard">
+        <div class="row"><span class="label">CAR ${i + 1} · ${c.id}</span>${who}</div>
+        <span class="nick">${esc(nick(c))}</span>
+        <div class="row" style="gap:12px;align-items:center">
+          <div class="cells" style="flex:1" aria-hidden="true">${[0, 1, 2, 3, 4].map(k => `<i style="${k < lit ? `background:${bc}` : ''}"></i>`).join('')}<b></b></div>
+          <span class="big" style="font-size:22px">${b == null ? '--' : b}<span style="font-size:13px;color:var(--muted)">%</span></span>
+          <div class="bars" aria-label="signal ${bars} of 4">${[10, 14, 18, 22].map((h, k) => `<i style="height:${h}px;${k < bars ? 'background:var(--ok)' : ''}"></i>`).join('')}</div>
+        </div>
+        <div class="row" style="min-height:24px"><span class="muted" style="font-size:13px">${r == null ? '' : r + ' dBm'}</span>${pick}</div>
+      </button>`;
+    }).join('');
+    if (html !== fleetHtml) fleet.innerHTML = fleetHtml = html; // only touch the DOM on change
+  }
+  fleet.addEventListener('click', e => {
+    const p = e.target.closest('[data-pad]');
+    if (p) { pad.car = p.dataset.pad; e.stopPropagation(); return renderFleet(); }
+    const card = e.target.closest('[data-n]');
+    if (card) select(+card.dataset.n === sel ? 0 : +card.dataset.n); // click the selected card again → ALL
+  });
+  fleet.addEventListener('keydown', e => {
+    const p = e.target.closest('[data-pad]');
+    if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); p.click(); }
+  });
+
   // ---- PS4 gamepad (Gamepad API, "standard" mapping) on a single car ----
   // R2/X/↑ gas · L2/□/↓ reverse · left stick/←→ steer · R1 turbo · ○ donut · △ light · OPTIONS race start
   const DEAD = 0.5; // the car is digital only: half press = full press
@@ -540,7 +598,7 @@ const TX_AT_1M = -55, N = 2.5;
     if (!document.hasFocus()) return;
     try {
       ({ cars } = await (await fetch('/', { method: 'POST', body: JSON.stringify(race || { ...body, car: target() }) })).json());
-      renderRace();
+      renderRace(); renderFleet();
       if (!sel) selBtn.textContent = `ALL (${cars.filter(c => c.connected).length})`;
       // in "all" show the first connected car
       const s = (sel ? cars[sel - 1] : cars.find(c => c.connected)) || {};
