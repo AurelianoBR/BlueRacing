@@ -92,7 +92,7 @@ async def rssi_poll(car, c):
 async def drive(car):
     try:
         async with BleakClient(car.dev) as c:
-            print(f"{car.id}: conectado ({car.dev.name})")
+            print(f"{car.id}: connected ({car.dev.name})")
             car.status.update(connected=True, battery=(await c.read_gatt_char(BATTERY))[0])
             await c.start_notify(BATTERY, lambda _, d: car.status.update(battery=d[0]))
             rssi_task = asyncio.create_task(rssi_poll(car, c))
@@ -105,9 +105,9 @@ async def drive(car):
                     pass
             rssi_task.cancel()
     except Exception as e:
-        print(f"{car.id}: erro BLE:", e)
+        print(f"{car.id}: BLE error:", e)
     else:
-        print(f"{car.id}: desconectado")
+        print(f"{car.id}: disconnected")
     finally:
         car.status.update(connected=False, rssi=None)
         car.busy = False  # next advertisement reconnects
@@ -120,7 +120,7 @@ def seen(dev, adv):
     car = cars.get(dev.address)
     if car is None:
         car = cars[dev.address] = Car(dev)
-        print(f"achei {name} -> {car.id}")
+        print(f"found {name} -> {car.id}")
     if not car.busy:
         car.busy = True
         car.dev = dev
@@ -130,7 +130,7 @@ def seen(dev, adv):
 async def ble():
     global loop
     loop = asyncio.get_running_loop()
-    print(f"procurando {PREFIX}*...")
+    print(f"looking for {PREFIX}*...")
     async with BleakScanner(seen):
         await asyncio.Event().wait()
 
@@ -138,5 +138,5 @@ async def ble():
 if __name__ == "__main__":
     server = ThreadingHTTPServer(("127.0.0.1", 8000), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    print("abra http://localhost:8000")
+    print("open http://localhost:8000")
     asyncio.run(ble())
